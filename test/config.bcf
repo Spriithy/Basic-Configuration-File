@@ -1,0 +1,9 @@
+boolean: true
+integer: 10
+float: 0.3
+string: Hey there
+
+group:
+	item1: false
+	item2: 42
+	item3: Hello Word!
