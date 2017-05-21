@@ -1,108 +1,57 @@
 package com.bcf.parser;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Tokenizer {
 
-	private String file;
-	private int line, col;
+	private List<String> lines;
 
-	private InputStreamReader in;
+	private List<Token> tokens;
 
-	private int ch, prev;
-
-	public Token token;
-
-	private boolean isKey;
+	private int lcount;
 
 	public Tokenizer(String file) {
-		try {
-			in = new FileReader(file);
-		} catch (FileNotFoundException e) {
-			error(1, "Couldn't open file '" + file + "'");
-		}
-
-		this.file = file;
-		line = 1;
-		col = 1;
-		prev = '\n';
-	}
-
-	public TokenType read() {
-		isKey = prev == '\n';
-
-		int start = col;
-		switch (ch) {
-		case -1:
-			token = Token.EOF(line, start);
-			break;
-		case ':':
-			token = Token.Colon(line, start);
-			break;
-		case ' ':
-			token = Token.WhiteSpace(line, start);
-			break;
-		case '\t':
-			token = Token.Tabulation(line, start);
-			break;
-		case '\n':
-		case '\r':
-			token = Token.LineFeed(line, start);
-			line++;
-			col = 0;
-			break;
-		case '#':
-			while (ch != '\n')
-				next();
-			prev = '\n';
-			return read();
-		default:
-			String text = "";
-			if (isKey && Character.isJavaIdentifierPart((char) ch)) {
-				while (Character.isJavaIdentifierPart((char) ch)) {
-					text += (char) ch;
-					next();
-				}
-
-				if (ch != ':' && !Character.isWhitespace((char) ch))
-					error(3, "error while reading '" + file + "' (line=" + line + ", col=" + (col - 1)
-							+ ")\n\tUnexpected character after text : '" + ((char) ch) + "'");
-
-				token = Token.Key(line, start, text);
-			} else if (!isKey) {
-				while (ch != '\n') {
-					text += (char) ch;
-					next();
-				}
-
-				token = Token.Value(line, start, text);
-			} else {
-				return read();
-			}
-			break; 
-		}
-
-		next();
-		return token.type;
-
-	}
-
-	public Token get() {
-		return token;
-	}
-
-	private boolean next() {
-		col++;
-		try {
-			prev = ch;
-			return ((ch = in.read()) == -1 ? false : true);
+		try (Stream<String> stream = Files.lines(Paths.get(file))) {
+			lines = stream
+					.filter(line -> !line.trim().startsWith("#"))
+					.collect(Collectors.toList());
 		} catch (IOException e) {
-			error(2, "error while reading '" + file + "' (line=" + line + ", col=" + (col - 1) + ")");
+			error(0, "Couldn't read file");
 		}
-		return false;
+		tokens = new ArrayList<>();
+	}
+
+	public void tokenize() {
+		lines.forEach(this::split);
+		tokens.add(Token.EOF(lcount));
+		tokens.forEach(System.out::println);
+	}
+
+	private void split(String line) {
+		lcount++;
+
+		if (line.trim().startsWith("#"))
+			return;
+
+		while (line.startsWith("\t")) {
+			line = line.substring(1);
+			tokens.add(Token.Tabulation(lcount));
+		}
+
+		String[] parts = line.split("\\s*:\\s*");
+		if (parts.length == 1 && line.indexOf(':') > 0)
+			tokens.add(Token.GroupKey(lcount, parts[0]));
+
+		if (parts.length > 1) {
+			tokens.add(Token.AtomKey(lcount, parts[0]));
+			tokens.add(Token.Value(lcount, line.substring(1 + line.indexOf(':')).trim()));
+		}
 	}
 
 	private static void error(int code, String message) {

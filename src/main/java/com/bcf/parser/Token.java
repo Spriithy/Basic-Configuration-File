@@ -2,51 +2,42 @@ package com.bcf.parser;
 
 public class Token {
 
-	public int line, col;
+	public int line;
 	public String text;
 	public TokenType type;
 
-	private Token(int line, int col, TokenType type, String text) {
+	private Token(int line, TokenType type, String text) {
 		this.line = line;
-		this.col = col;
 		this.text = text;
 		this.type = type;
 	}
 
-	public static Token Key(int line, int col, String key) {
-		return new Token(line, col, TokenType.KEY, key);
+	public static Token AtomKey(int line, String key) {
+		return new Token(line, TokenType.ATOM_KEY, key);
+	}
+	
+	public static Token GroupKey(int line, String key) {
+		return new Token(line, TokenType.GROUP_KEY, key);
 	}
 
-	public static Token Colon(int line, int col) {
-		return new Token(line, col, TokenType.COLON, ":");
+	public static Token Value(int line, String value) {
+		return new Token(line, TokenType.VALUE, value);
 	}
 
-	public static Token Value(int line, int col, String value) {
-		return new Token(line, col, TokenType.VALUE, value);
+	public static Token Tabulation(int line) {
+		return new Token(line, TokenType.TABULATION, "\\t");
 	}
 
-	public static Token WhiteSpace(int line, int col) {
-		return new Token(line, col, TokenType.WHITE_SPACE, " ");
+	public static Token LineFeed(int line) {
+		return new Token(line, TokenType.LINE_FEED, "\\n");
 	}
 
-	public static Token Tabulation(int line, int col) {
-		return new Token(line, col, TokenType.TABULATION, "\\t");
-	}
-
-	public static Token LineFeed(int line, int col) {
-		return new Token(line, col, TokenType.LINE_FEED, "\\n");
-	}
-
-	public static Token Invalid(int line, int col, String text) {
-		return new Token(line, col, TokenType.INVALID, text);
-	}
-
-	public static Token EOF(int line, int col) {
-		return new Token(line, col, TokenType.EOF, "");
+	public static Token EOF(int line) {
+		return new Token(line, TokenType.EOF, "");
 	}
 
 	public String toString() {
-		return String.format("%d:%d: (%s, '%s')", line, col, type.name(), text);
+		return String.format("%d: (%s, '%s')", line, type.name(), text);
 	}
 
 }

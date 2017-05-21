@@ -2,13 +2,11 @@ package com.bcf.parser;
 
 public enum TokenType {
 	
-	KEY,
-	COLON,
+	ATOM_KEY,
+	GROUP_KEY,
 	VALUE,
-	WHITE_SPACE,
 	TABULATION,
 	LINE_FEED,
-	INVALID,
 	EOF,
 	
 }
